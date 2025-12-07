@@ -1,4 +1,3 @@
-
 source("R/CommonFunction.R")
 
 #generate all DAGs

@@ -1,6 +1,6 @@
 // [[Rcpp::depends(RcppArmadillo)]]
 #include <RcppArmadillo.h>
-#include "branch_and_bound_bn.h"  // your header file with declarations
+#include "CommonFunction.h"
 
 #include <vector>
 #include <map>
@@ -8,171 +8,14 @@
 #include <functional>
 #include <cmath>
 
-// ----------------- cycle detection functions (0-based indices) -----------------
-bool dfs_cycle(int u, const arma::imat &adj, std::vector<int> &state) {
-  state[u] = 1;  // visiting
 
-  int p = adj.n_cols;
-  for (int v = 0; v < p; ++v) {
-    if (adj(u, v) == 0) continue;
-    if (state[v] == 1) return true;
-    if (state[v] == 0 && dfs_cycle(v, adj, state)) return true;
-  }
-
-  state[u] = 2;
-  return false;
-}
-
-bool is_acyclic_cpp(const arma::imat &adj) {
-  int p = adj.n_cols;
-  std::vector<int> state(p, 0);
-  for (int u = 0; u < p; ++u) {
-    if (state[u] == 0) {
-      if (dfs_cycle(u, adj, state)) return false;
-    }
-  }
-  return true;
-}
-
-// ----------------- Gaussian local BIC (your function, 0-based indices) -----------------
-// [[Rcpp::export]]
-double local_bic_gaussian_cpp(int j, const arma::uvec &parents, const arma::mat &X) {
-  int N = X.n_rows;
-  arma::vec y = X.col(j);
-
-  if (parents.n_elem == 0) {
-    double mu = arma::mean(y);
-    arma::vec r = y - mu;
-    double rss = arma::dot(r, r);
-    double sigma2 = rss / N;
-    if (sigma2 <= 0) sigma2 = 1e-12;
-    double loglik = -0.5 * N * (std::log(2.0 * datum::pi * sigma2) + 1.0);
-    int k = 2;
-    return loglik - 0.5 * std::log((double)N) * k;
-  }
-
-  int q = parents.n_elem;
-  arma::mat Xd(N, q + 1);
-  Xd.col(0).ones();
-  for (int k = 0; k < q; ++k) {
-    Xd.col(k + 1) = X.col(parents(k));
-  }
-
-  arma::mat XtX = Xd.t() * Xd;
-  arma::vec Xty = Xd.t() * y;
-
-  arma::vec beta;
-  bool solved = arma::solve(beta, XtX, Xty);
-  if (!solved) beta = arma::pinv(XtX) * Xty;
-
-  arma::vec r = y - Xd * beta;
-  double rss = arma::dot(r, r);
-  double sigma2 = rss / N;
-  if (sigma2 <= 0) sigma2 = 1e-12;
-  double loglik = -0.5 * N * (std::log(2.0 * datum::pi * sigma2) + 1.0);
-
-  int k = q + 2;
-  return loglik - 0.5 * std::log((double)N) * k;
-}
-
-// Graph-level Gaussian BIC using your local function
-// [[Rcpp::export]]
-double bic_score_gaussian_cpp(const arma::imat &adj, const arma::mat &X) {
-  if (!is_acyclic_cpp(adj)) return R_NegInf;
-  int p = X.n_cols;
-  double total = 0.0;
-  for (int j = 0; j < p; ++j) {
-    arma::uvec parents = arma::find(adj.col(j) != 0);
-    total += local_bic_gaussian_cpp(j, parents, X);
-  }
-  return total;
-}
-
-// ----------------- Multinomial local BIC (your function) -----------------
-double local_bic_multinom_cpp(int j,
-                              const arma::uvec &parents,
-                              const arma::imat &X_disc,
-                              const arma::ivec &n_levels) {
-  int N = X_disc.n_rows;
-  int r_j = n_levels(j);
-
-  if (parents.n_elem == 0) {
-    std::vector<int> counts(r_j, 0);
-    for (int n = 0; n < N; ++n) {
-      int s = X_disc(n, j);
-      if (s >= 0 && s < r_j) counts[s]++;
-    }
-    double loglik = 0.0;
-    int total = 0;
-    for (int s = 0; s < r_j; ++s) total += counts[s];
-    if (total == 0) return R_NegInf;
-
-    for (int s = 0; s < r_j; ++s) {
-      if (counts[s] > 0) {
-        double p = (double)counts[s] / (double)total;
-        loglik += counts[s] * std::log(p);
-      }
-    }
-    int k = r_j - 1;
-    return loglik - 0.5 * std::log((double)N) * k;
-  }
-
-  int q = parents.n_elem;
-  std::map< std::vector<int>, std::vector<int> > table;
-
-  for (int n = 0; n < N; ++n) {
-    std::vector<int> key(q);
-    for (int k = 0; k < q; ++k) key[k] = X_disc(n, parents(k));
-    int child = X_disc(n, j);
-
-    auto it = table.find(key);
-    if (it == table.end()) {
-      std::vector<int> vec(r_j, 0);
-      if (child >= 0 && child < r_j) vec[child]++;
-      table.insert(std::make_pair(key, vec));
-    } else {
-      if (child >= 0 && child < r_j) it->second[child]++;
-    }
-  }
-
-  double loglik = 0.0;
-  for (auto &kv : table) {
-    std::vector<int> &vec = kv.second;
-    int total = 0;
-    for (int s = 0; s < r_j; ++s) total += vec[s];
-    if (total == 0) continue;
-    for (int s = 0; s < r_j; ++s) {
-      if (vec[s] > 0) {
-        double p = (double)vec[s] / (double)total;
-        loglik += vec[s] * std::log(p);
-      }
-    }
-  }
-
-  int q_j = (int)table.size();
-  int k = (r_j - 1) * q_j;
-  return loglik - 0.5 * std::log((double)N) * k;
-}
-
-// Graph-level multinomial BIC
-// [[Rcpp::export]]
-double bic_score_multinom_cpp(const arma::imat &adj,
-                              const arma::imat &X_disc,
-                              const arma::ivec &n_levels) {
-  if (!is_acyclic_cpp(adj)) return R_NegInf;
-  int p = X_disc.n_cols;
-  double total = 0.0;
-  for (int j = 0; j < p; ++j) {
-    arma::uvec parents = arma::find(adj.col(j) != 0);
-    total += local_bic_multinom_cpp(j, parents, X_disc, n_levels);
-  }
-  return total;
-}
+using namespace Rcpp;
+using namespace arma;
 
 // ----------------- Precompute local scores (Gaussian & Multinom) -----------------
 // Return a List where each element is a NumericVector of length max_mask (2^p)
 // [[Rcpp::export]]
-List precompute_local_scores_gaussian(const arma::mat &X) {
+List precompute_local_scores_gaussian_cpp(const arma::mat &X) {
   int p = X.n_cols;
   int max_mask = 1 << p;
   List out(p);
@@ -199,7 +42,7 @@ List precompute_local_scores_gaussian(const arma::mat &X) {
 }
 
 // [[Rcpp::export]]
-List precompute_local_scores_multinom(const arma::imat &X_disc, const arma::ivec &n_levels) {
+List precompute_local_scores_multinom_cpp(const arma::imat &X_disc, const arma::ivec &n_levels) {
   int p = X_disc.n_cols;
   int max_mask = 1 << p;
   List out(p);
@@ -223,9 +66,9 @@ List precompute_local_scores_multinom(const arma::imat &X_disc, const arma::ivec
   return out;
 }
 
-// ----------------- best_score_given_predecessors (submask enumeration) -----------------
+// ----------------- best_score_given_predecessors_cpp (submask enumeration) -----------------
 // [[Rcpp::export]]
-double best_score_given_predecessors(const NumericVector &scores_j, int preds_mask) {
+double best_score_given_predecessors_cpp(const NumericVector &scores_j, int preds_mask) {
   double best = R_NegInf;
   int sub = preds_mask;
   while (true) {
@@ -260,10 +103,10 @@ arma::imat build_adj_from_parent_masks(const IntegerVector &parent_masks) {
 // For gaussian: provide X (numeric matrix)
 //
 // [[Rcpp::export]]
-List branch_and_bound_bn(const Nullable<arma::mat> &X_nullable = R_NilValue,
-                         const Nullable<arma::imat> &X_disc_nullable = R_NilValue,
-                         const Nullable<arma::ivec> &n_levels_nullable = R_NilValue,
-                         std::string distribution = "gaussian") {
+List branch_and_bound_bn_cpp(const Nullable<RObject> &X_nullable = R_NilValue,
+                             const Nullable<arma::imat> &X_disc_nullable = R_NilValue,
+                             const Nullable<arma::ivec> &n_levels_nullable = R_NilValue,
+                             std::string distribution = "gaussian") {
 
   bool is_gauss = (distribution == "gaussian");
   bool is_multi = (distribution == "multinomial");
@@ -277,9 +120,31 @@ List branch_and_bound_bn(const Nullable<arma::mat> &X_nullable = R_NilValue,
     if (X_nullable.isNull()) stop("For gaussian distribution, provide X (numeric matrix).");
     X = as<arma::mat>(X_nullable);
   } else {
-    if (X_disc_nullable.isNull() || n_levels_nullable.isNull()) stop("For multinomial provide X_disc and n_levels.");
-    X_disc = as<arma::imat>(X_disc_nullable);
-    n_levels = as<arma::ivec>(n_levels_nullable);
+    // multinomial: automatically convert X to X_disc and n_levels if not provided
+    if (!X_disc_nullable.isNull() && !n_levels_nullable.isNull()) {
+      X_disc = as<arma::imat>(X_disc_nullable);
+      n_levels = as<arma::ivec>(n_levels_nullable);
+    } else if (!X_nullable.isNull()) {
+      // Convert R dataframe or matrix to integer matrix
+      Rcpp::DataFrame df(X_nullable);
+      int N = df.nrows();
+      int p_col = df.size();
+      X_disc.set_size(N, p_col);
+      n_levels.set_size(p_col);
+
+      for (int j = 0; j < p_col; ++j) {
+        Rcpp::RObject col = df[j];
+        Rcpp::IntegerVector col_int = Rcpp::as<Rcpp::IntegerVector>(col);
+        int max_lvl = 0;
+        for (int i = 0; i < N; ++i) {
+          X_disc(i,j) = col_int[i] - 1; // assumes factors in R start at 1
+          if (X_disc(i,j) > max_lvl) max_lvl = X_disc(i,j);
+        }
+        n_levels[j] = max_lvl + 1;
+      }
+    } else {
+      stop("For multinomial provide X, or X_disc and n_levels.");
+    }
   }
 
   int p = is_gauss ? X.n_cols : X_disc.n_cols;
@@ -287,13 +152,9 @@ List branch_and_bound_bn(const Nullable<arma::mat> &X_nullable = R_NilValue,
     arma::imat adj(p, p, arma::fill::zeros);
     double s = 0.0;
     if (p == 1) {
-      if (is_gauss) {
-        arma::uvec empty; empty.reset();
-        s = local_bic_gaussian_cpp(0, empty, X);
-      } else {
-        arma::uvec empty; empty.reset();
-        s = local_bic_multinom_cpp(0, empty, X_disc, n_levels);
-      }
+      arma::uvec empty; empty.reset();
+      if (is_gauss) s = local_bic_gaussian_cpp(0, empty, X);
+      else s = local_bic_multinom_cpp(0, empty, X_disc, n_levels);
     }
     return List::create(_["best_adj"] = adj,
                         _["best_score"] = s,
@@ -303,12 +164,11 @@ List branch_and_bound_bn(const Nullable<arma::mat> &X_nullable = R_NilValue,
   }
 
   Rcout << "Precomputing local scores for every node and parent subset (2^p masks each)...\n";
-
   auto t0 = std::chrono::high_resolution_clock::now();
 
   List scores_list;
-  if (is_gauss) scores_list = precompute_local_scores_gaussian(X);
-  else scores_list = precompute_local_scores_multinom(X_disc, n_levels);
+  if (is_gauss) scores_list = precompute_local_scores_gaussian_cpp(X);
+  else scores_list = precompute_local_scores_multinom_cpp(X_disc, n_levels);
 
   int max_mask = 1 << p;
 
@@ -328,7 +188,6 @@ List branch_and_bound_bn(const Nullable<arma::mat> &X_nullable = R_NilValue,
   IntegerVector global_best_parent_masks(p);
   long nodes_explored = 0;
   long pruned = 0;
-
   int all_nodes_mask = (1 << p) - 1;
 
   // recursive DFS lambda
@@ -365,7 +224,7 @@ List branch_and_bound_bn(const Nullable<arma::mat> &X_nullable = R_NilValue,
 
       for (int j : rem_indices) {
         NumericVector scores_j = scores_list[j - 1];
-        double best_local = best_score_given_predecessors(scores_j, preds_mask);
+        double best_local = best_score_given_predecessors_cpp(scores_j, preds_mask);
         if (!std::isfinite(best_local)) continue;
 
         // find mask achieving best_local (search submasks)
