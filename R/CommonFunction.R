@@ -79,40 +79,61 @@ local_bic_gaussian <- function(j, parents, X) {
 #'
 #' @return Numeric, local BIC score contribution for node \code{j}.
 local_bic_multinomial <- function(j, parents, X) {
-  df <- as.data.frame(X)
-  df[] <- lapply(df, factor)
-
-  y <- df[[j]]
-  N <- nrow(df)
-
-  if (length(parents) == 0L) {
-    tab <- table(y)
-    probs_hat <- tab / sum(tab)
-    loglik <- sum(tab * log(probs_hat))
-
-    r_j <- length(tab)          # number of states of X_j
-    k <- r_j - 1L               # degrees of freedom
-    return(loglik - 0.5 * log(N) * k)
+  # X: data.frame or matrix, assumed no NA
+  df <- as.data.frame(X, stringsAsFactors = FALSE)
+  # coerce only the involved columns to factor (preserve others)
+  df[[j]] <- as.factor(df[[j]])
+  if (length(parents) > 0L) {
+    for (p in parents) df[[p]] <- as.factor(df[[p]])
   }
 
+  N <- nrow(df)
+  if (N == 0L) return(-Inf)
+
+  y <- df[[j]]
+
+  # no parents case
+  if (length(parents) == 0L) {
+    tab <- table(y)
+    pos <- which(tab > 0)
+    if (length(pos) == 0L) return(-Inf)
+    probs_hat <- tab[pos] / sum(tab[pos])
+    loglik <- sum(tab[pos] * log(probs_hat))
+    r_j <- length(tab)
+    k <- r_j - 1L
+    return(as.numeric(loglik - 0.5 * log(N) * k))
+  }
+
+  # parents present: build contingency table
   parent_names <- names(df)[parents]
   tmp <- df[, c(parent_names, names(df)[j]), drop = FALSE]
+  tab_df <- as.data.frame(table(tmp), stringsAsFactors = FALSE)
+  names(tab_df)[ncol(tab_df)] <- "Freq"
 
-  tab <- as.data.frame(table(tmp))
+  # key for parent configurations (interaction), drop unused levels
+  key <- do.call("interaction", c(tab_df[parent_names], drop = TRUE))
+  if (all(is.na(key))) return(-Inf)
 
-  key <- interaction(tab[, parent_names], drop = TRUE)
-  N_pa <- tapply(tab$Freq, key, sum)
-  N_pa_each <- N_pa[key]
+  # compute N_pa for each parent config
+  N_pa <- tapply(tab_df$Freq, key, sum)
+  keys_unique <- names(N_pa)
 
-  probs_hat <- tab$Freq / N_pa_each
-  loglik <- sum(tab$Freq * log(probs_hat))
+  loglik <- 0
+  for (kname in keys_unique) {
+    rows_k <- which(key == kname)
+    freqs <- tab_df$Freq[rows_k]
+    pos <- which(freqs > 0)
+    if (length(pos) == 0) next
+    probs_hat <- freqs[pos] / sum(freqs[pos])
+    # safe: probs_hat > 0 and freqs[pos] > 0
+    loglik <- loglik + sum(freqs[pos] * log(probs_hat))
+  }
 
   r_j <- nlevels(y)
-  q_j <- length(N_pa)           # number of parent configurations
+  q_j <- length(N_pa)
   k <- (r_j - 1L) * q_j
-  loglik - 0.5 * log(N) * k
+  return(as.numeric(loglik - 0.5 * log(N) * k))
 }
-
 
 #' Global BIC score for a Bayesian network
 #'
@@ -129,6 +150,9 @@ local_bic_multinomial <- function(j, parents, X) {
 bic_score_bn <- function(adj, X, distribution = c("gaussian", "multinomial")) {
   distribution <- match.arg(distribution)
 
+  # explicit NA check (user requested): fail fast if any NA present
+  if (anyNA(X)) stop("bic_score_bn: data X contains NA. Please handle or impute before calling.")
+
   if (!is_acyclic(adj)) return(-Inf)
 
   p <- ncol(X)
@@ -139,8 +163,10 @@ bic_score_bn <- function(adj, X, distribution = c("gaussian", "multinomial")) {
 
     if (distribution == "gaussian") {
       total <- total + local_bic_gaussian(j, parents, X)
-    } else {
+    } else if (distribution == "multinomial") {
       total <- total + local_bic_multinomial(j, parents, X)
+    } else {
+      stop("Error: Please enter one of the distribution assumption for this model : ('gaussian' or 'multinomial')")
     }
   }
 
