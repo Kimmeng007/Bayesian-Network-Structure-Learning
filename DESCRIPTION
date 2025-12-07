@@ -1,19 +1,21 @@
 Package: M2BayesNet
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Score-based Structural Learning in Bayesian Networks
 Version: 0.1.0
 Authors@R: c(
     person(
-      "Jane", "Doe",
-      email = "jane@example.com",
+      "Ratanakmuny NOUV", "Kimmeng HONG", "Tito KOH",
+      email = "rathanakmuny2nouv@gmail.com",
       role = c("aut", "cre")
     )
   )
-Description: More about what it does (maybe more than one line).
-    Continuation lines should be indented.
-License: What license is it under?
+Description: Implements naive, exact and heuristic (hill-climbing, tabu search)
+    structure learning for Bayesian networks with common BIC score, in R and C++.
+License: MIT
 Encoding: UTF-8
 LazyData: true
+Roxygen: list(markup = "rd", roclets = c("namespace", "rd"))
+RoxygenNote: 7.3.3
 Imports: Rcpp (>= 1.0.13-1)
-LinkingTo: Rcpp
+LinkingTo: Rcpp, RcppArmadillo
 URL: https://github.com/rmnouv/M2BayesNet
