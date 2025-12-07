@@ -10,6 +10,104 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// local_bic_gaussian_cpp
+double local_bic_gaussian_cpp(int j, const arma::uvec& parents, const arma::mat& X);
+RcppExport SEXP _M2BayesNet_local_bic_gaussian_cpp(SEXP jSEXP, SEXP parentsSEXP, SEXP XSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type j(jSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type parents(parentsSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    rcpp_result_gen = Rcpp::wrap(local_bic_gaussian_cpp(j, parents, X));
+    return rcpp_result_gen;
+END_RCPP
+}
+// bic_score_gaussian_cpp
+double bic_score_gaussian_cpp(const arma::imat& adj, const arma::mat& X);
+RcppExport SEXP _M2BayesNet_bic_score_gaussian_cpp(SEXP adjSEXP, SEXP XSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::imat& >::type adj(adjSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    rcpp_result_gen = Rcpp::wrap(bic_score_gaussian_cpp(adj, X));
+    return rcpp_result_gen;
+END_RCPP
+}
+// bic_score_multinom_cpp
+double bic_score_multinom_cpp(const arma::imat& adj, const arma::imat& X_disc, const arma::ivec& n_levels);
+RcppExport SEXP _M2BayesNet_bic_score_multinom_cpp(SEXP adjSEXP, SEXP X_discSEXP, SEXP n_levelsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::imat& >::type adj(adjSEXP);
+    Rcpp::traits::input_parameter< const arma::imat& >::type X_disc(X_discSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type n_levels(n_levelsSEXP);
+    rcpp_result_gen = Rcpp::wrap(bic_score_multinom_cpp(adj, X_disc, n_levels));
+    return rcpp_result_gen;
+END_RCPP
+}
+// precompute_local_scores_gaussian
+List precompute_local_scores_gaussian(const arma::mat& X);
+RcppExport SEXP _M2BayesNet_precompute_local_scores_gaussian(SEXP XSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    rcpp_result_gen = Rcpp::wrap(precompute_local_scores_gaussian(X));
+    return rcpp_result_gen;
+END_RCPP
+}
+// precompute_local_scores_multinom
+List precompute_local_scores_multinom(const arma::imat& X_disc, const arma::ivec& n_levels);
+RcppExport SEXP _M2BayesNet_precompute_local_scores_multinom(SEXP X_discSEXP, SEXP n_levelsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::imat& >::type X_disc(X_discSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type n_levels(n_levelsSEXP);
+    rcpp_result_gen = Rcpp::wrap(precompute_local_scores_multinom(X_disc, n_levels));
+    return rcpp_result_gen;
+END_RCPP
+}
+// best_score_given_predecessors
+double best_score_given_predecessors(const NumericVector& scores_j, int preds_mask);
+RcppExport SEXP _M2BayesNet_best_score_given_predecessors(SEXP scores_jSEXP, SEXP preds_maskSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericVector& >::type scores_j(scores_jSEXP);
+    Rcpp::traits::input_parameter< int >::type preds_mask(preds_maskSEXP);
+    rcpp_result_gen = Rcpp::wrap(best_score_given_predecessors(scores_j, preds_mask));
+    return rcpp_result_gen;
+END_RCPP
+}
+// build_adj_from_parent_masks
+arma::imat build_adj_from_parent_masks(const IntegerVector& parent_masks);
+RcppExport SEXP _M2BayesNet_build_adj_from_parent_masks(SEXP parent_masksSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const IntegerVector& >::type parent_masks(parent_masksSEXP);
+    rcpp_result_gen = Rcpp::wrap(build_adj_from_parent_masks(parent_masks));
+    return rcpp_result_gen;
+END_RCPP
+}
+// branch_and_bound_bn
+List branch_and_bound_bn(const Nullable<arma::mat>& X_nullable, const Nullable<arma::imat>& X_disc_nullable, const Nullable<arma::ivec>& n_levels_nullable, std::string distribution);
+RcppExport SEXP _M2BayesNet_branch_and_bound_bn(SEXP X_nullableSEXP, SEXP X_disc_nullableSEXP, SEXP n_levels_nullableSEXP, SEXP distributionSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Nullable<arma::mat>& >::type X_nullable(X_nullableSEXP);
+    Rcpp::traits::input_parameter< const Nullable<arma::imat>& >::type X_disc_nullable(X_disc_nullableSEXP);
+    Rcpp::traits::input_parameter< const Nullable<arma::ivec>& >::type n_levels_nullable(n_levels_nullableSEXP);
+    Rcpp::traits::input_parameter< std::string >::type distribution(distributionSEXP);
+    rcpp_result_gen = Rcpp::wrap(branch_and_bound_bn(X_nullable, X_disc_nullable, n_levels_nullable, distribution));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rcpp_hello
 List rcpp_hello();
 RcppExport SEXP _M2BayesNet_rcpp_hello() {
@@ -22,6 +120,14 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_M2BayesNet_local_bic_gaussian_cpp", (DL_FUNC) &_M2BayesNet_local_bic_gaussian_cpp, 3},
+    {"_M2BayesNet_bic_score_gaussian_cpp", (DL_FUNC) &_M2BayesNet_bic_score_gaussian_cpp, 2},
+    {"_M2BayesNet_bic_score_multinom_cpp", (DL_FUNC) &_M2BayesNet_bic_score_multinom_cpp, 3},
+    {"_M2BayesNet_precompute_local_scores_gaussian", (DL_FUNC) &_M2BayesNet_precompute_local_scores_gaussian, 1},
+    {"_M2BayesNet_precompute_local_scores_multinom", (DL_FUNC) &_M2BayesNet_precompute_local_scores_multinom, 2},
+    {"_M2BayesNet_best_score_given_predecessors", (DL_FUNC) &_M2BayesNet_best_score_given_predecessors, 2},
+    {"_M2BayesNet_build_adj_from_parent_masks", (DL_FUNC) &_M2BayesNet_build_adj_from_parent_masks, 1},
+    {"_M2BayesNet_branch_and_bound_bn", (DL_FUNC) &_M2BayesNet_branch_and_bound_bn, 4},
     {"_M2BayesNet_rcpp_hello", (DL_FUNC) &_M2BayesNet_rcpp_hello, 0},
     {NULL, NULL, 0}
 };

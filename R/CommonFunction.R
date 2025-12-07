@@ -172,3 +172,9 @@ bic_score_bn <- function(adj, X, distribution = c("gaussian", "multinomial")) {
 
   total
 }
+
+set_adj_names <- function(adj, X) {
+  colnames(adj) <- colnames(X)
+  rownames(adj) <- colnames(X)
+  adj
+}
