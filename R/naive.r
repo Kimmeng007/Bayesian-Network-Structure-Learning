@@ -1,10 +1,4 @@
-#' Check if an adjacency matrix is acyclic
-#'
-#' @param adj Integer or numeric p x p adjacency matrix.
-#'   `adj[i, j] = 1` means there is a directed edge i -> j.
-#'
-#' @return Logical. `TRUE` if the graph is a DAG (no directed cycles),
-#'   `FALSE` otherwise.
+# Check if an adjacency matrix is acyclic
 is_acyclic <- function(adj) {
   p <- nrow(adj)
   visited  <- integer(p)
@@ -32,13 +26,7 @@ is_acyclic <- function(adj) {
 }
 
 
-#' Local BIC score for a Gaussian Bayesian network node
-#'
-#' @param j Integer, index of the child variable (column index in `X`).
-#' @param parents Integer vector of parent indices (can be `integer(0)`).
-#' @param X Numeric matrix or data frame of size N x p containing the data.
-#'
-#' @return Numeric, local BIC score contribution for node \code{j}.
+# Local BIC score for a Gaussian Bayesian network node
 local_bic_gaussian <- function(j, parents, X) {
   X <- as.matrix(X)
   y <- X[, j]
@@ -70,18 +58,11 @@ local_bic_gaussian <- function(j, parents, X) {
 }
 
 
-#' Local BIC score for a multinomial (discrete) Bayesian network node
-#'
-#' @param j Integer, index of the child variable (column index in `X`).
-#' @param parents Integer vector of parent indices (can be `integer(0)`).
-#' @param X Data frame or matrix of size N x p with categorical variables
-#'   (will be coerced to factors internally).
-#'
-#' @return Numeric, local BIC score contribution for node \code{j}.
+# Local BIC score for a multinomial (discrete) Bayesian network node
 local_bic_multinomial <- function(j, parents, X) {
   # X: data.frame or matrix, assumed no NA
   df <- as.data.frame(X, stringsAsFactors = FALSE)
-  # coerce only the involved columns to factor (preserve others)
+
   df[[j]] <- as.factor(df[[j]])
   if (length(parents) > 0L) {
     for (p in parents) df[[p]] <- as.factor(df[[p]])
@@ -135,18 +116,7 @@ local_bic_multinomial <- function(j, parents, X) {
   return(as.numeric(loglik - 0.5 * log(N) * k))
 }
 
-#' Global BIC score for a Bayesian network
-#'
-#' @param adj Integer or numeric p x p adjacency matrix representing the DAG.
-#'   `adj[i, j] = 1` means there is a directed edge i -> j.
-#' @param X Data frame or matrix of size N x p containing the data.
-#'   Must be numeric for \code{distribution = "gaussian"} and
-#'   categorical (or coercible to factors) for \code{distribution = "multinomial"}.
-#' @param distribution Character string, either `"gaussian"` or `"multinomial"`,
-#'   selecting the type of local likelihood model used in the BIC score.
-#'
-#' @return Numeric, global BIC score (sum of local scores) for the DAG
-#'   encoded by \code{adj}. Returns \code{-Inf} if \code{adj} is not acyclic.
+# Global BIC score for a Bayesian network
 bic_score_bn <- function(adj, X, distribution = c("gaussian", "multinomial")) {
   distribution <- match.arg(distribution)
 
