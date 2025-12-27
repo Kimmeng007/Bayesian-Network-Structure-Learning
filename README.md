@@ -1,5 +1,6 @@
-**M2BayesNet** is an R package for **Bayesian Network structure learning** using **score-based methods**.  
-It provides several algorithms to learn the structure of a Bayesian Network and returns both the **adjacency matrix** and the **BIC score** of the learned network. The package supports **Gaussian** and **Multinomial** data only.
+# Bayesian Network Structure Learning Package in R 
+
+**M2BayesNet** is an R package for **Bayesian Network structure learning** using **score-based methods**. It provides several algorithms to learn the structure of a Bayesian Network and returns both the **adjacency matrix** and the **BIC score** of the learned network. The package supports **Gaussian** and **Multinomial** data only.
 
 ## Features
 
