@@ -47,22 +47,21 @@ Evaluation criteria may include:
 - Stability across runs
 
 ## How to use the package?
-# 1. Install required dependencies
+1. Install required dependencies
 ```r
 install.packages(c("Rcpp","RcppArmadillo","devtools","roxygen2","testthat"))
 ```
 
-# 2. Install the package from GitHub
+2. Install the package from GitHub
 ```r
 devtools::install_github("Kimmeng007/Bayesian-Network-Structure-Learning")
 ```
-# 3. Load the package
+3. Load the package
 ```r
 library(M2BayesNet)
 ```
-
-# 4. (For Windows user) If you get a compiler error, install Rtools:
-# https://cran.r-project.org/bin/windows/Rtools/
+4. (For Windows user) If you get a compiler error, install Rtools:
+https://cran.r-project.org/bin/windows/Rtools/
 
 ## Contributors
 HONG Kimmeng, KOH Tito, NOUV Ratanakmuny
