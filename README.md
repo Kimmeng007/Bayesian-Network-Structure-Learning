@@ -1,52 +1,24 @@
-# Structure Learning for Bayesian Networks
+**M2BayesNet** is an R package for **Bayesian Network structure learning** using **score-based methods**.  
+It provides several algorithms to learn the structure of a Bayesian Network and returns both the **adjacency matrix** and the **BIC score** of the learned network. The package supports **Gaussian** and **Multinomial** data only.
 
-This repository contains an implementation and experimental study of **structure learning algorithms for Bayesian Networks**, focusing on learning Directed Acyclic Graphs (DAGs) from data using score-based and constraint-based approaches. The project was developed as an academic submission and explores both theoretical foundations and practical performance of Bayesian network structure learning methods.
+## Features
 
-## Project Overview
+- Score-based Bayesian Network structure learning
+- Uses **BIC (Bayesian Information Criterion)** as the scoring function
+- Multiple learning strategies:
+  - Naive method
+  - Branch and Bound
+  - Heuristic methods:
+    - Hill Climbing
+    - Tabu Search
+- Outputs:
+  - Adjacency matrix of the learned DAG
+  - BIC score of the learned structure
+- Supported distributions:
+  - Gaussian
+  - Multinomial
 
-Bayesian Networks (BNs) are probabilistic graphical models that represent conditional dependencies between random variables using a Directed Acyclic Graph (DAG). Learning the structure of a BN from data is a challenging combinatorial optimization problem.
-
-This project investigates:
-- How Bayesian Network structures can be learned from data
-- The trade-offs between different structure learning strategies
-- Empirical evaluation of learned structures on benchmark datasets
-
-## Key Concepts
-
-- Bayesian Networks (BNs)
-- Directed Acyclic Graphs (DAGs)
-- Structure learning
-- Score-based methods
-- Constraint-based methods
-- Conditional independence tests
-
-## Methods Implemented
-
-The project focuses on **structure learning**, including:
-
-### 1. Score-Based Learning
-- Searches for the best DAG by optimizing a scoring function
-- Typical scores include likelihood-based or information-theoretic criteria
-- Uses heuristic search strategies due to the exponential search space
-
-### 2. Constraint-Based Learning
-- Relies on statistical conditional independence tests
-- Builds the graph structure by identifying dependencies and independencies
-- Often faster but sensitive to statistical errors
-
-## Experiments & Evaluation
-
-The implementation is evaluated through:
-- Synthetic or real-world datasets
-- Comparison of learned graph structures
-- Analysis of accuracy, complexity, and robustness
-
-Evaluation criteria may include:
-- Structural Hamming Distance (SHD)
-- Computational efficiency
-- Stability across runs
-
-## How to use the package?
+## Installation
 The package can be used in any R environment, following the steps below.
 1. Install required dependencies
 ```r
@@ -63,6 +35,90 @@ library(M2BayesNet)
 ```
 4. (For Windows user) If you get a compiler error, install Rtools:
 https://cran.r-project.org/bin/windows/Rtools/
+
+## Supported Data Types
+
+M2BayesNet currently supports:
+
+- **Gaussian data** (continuous variables)
+- **Multinomial data** (categorical variables)
+
+Other distributions are not supported.
+
+## Structure Learning Methods
+
+### 1. Naive Method
+
+A simple structure learning approach that evaluates candidate network structures directly using the BIC score.
+
+Returns:
+- Adjacency matrix
+- BIC score
+
+### 2. Branch and Bound
+
+An exact search method that reduces the search space using bounding techniques to efficiently find high-scoring structures.
+
+Returns:
+- Adjacency matrix
+- BIC score
+
+### 3. Heuristic Methods
+
+Designed for larger networks where exact search is computationally expensive.
+
+#### Hill Climbing
+- Greedy local search
+- Iteratively improves the network by local structure modifications
+
+#### Tabu Search
+- Local search with memory
+- Uses a tabu list to avoid cycling and local optima
+
+Returns (for all heuristic methods):
+- Adjacency matrix
+- BIC score
+
+## Example Usage
+
+```r
+# Example dataset (Gaussian or Multinomial)
+data <- your_data_matrix
+
+# Naive method
+result_naive <- naive_bn(data, distribution = "gaussian")
+
+# Branch and Bound
+result_bb <- branch_bound_bn(data, distribution = "multinomial")
+
+# Hill Climbing
+result_hc <- hill_climbing_bn(data, distribution = "gaussian")
+
+# Tabu Search
+result_tabu <- tabu_search_bn(data, distribution = "gaussian")
+
+# Extract results
+adjacency_matrix <- result_hc$adjacency_matrix
+bic_score <- result_hc$bic_score
+```
+
+## Output Format
+
+Each structure learning function returns a list containing:
+
+- `adjacency_matrix`  
+  A square matrix representing the learned Bayesian Network structure
+
+- `bic_score`  
+  The BIC score of the learned network
+
+---
+
+## Limitations
+
+- Supports only Gaussian and Multinomial distributions
+- Structure learning only (no parameter learning)
+- No built-in network visualization
 
 ## Contributors
 HONG Kimmeng, KOH Tito, NOUV Ratanakmuny
