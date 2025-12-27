@@ -47,6 +47,7 @@ Evaluation criteria may include:
 - Stability across runs
 
 ## How to use the package?
+The package can be used in any R environment, following the steps below.
 1. Install required dependencies
 ```r
 install.packages(c("Rcpp","RcppArmadillo","devtools","roxygen2","testthat"))
