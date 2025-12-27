@@ -87,20 +87,20 @@ Returns (for all heuristic methods):
 data <- your_data_matrix
 
 # Naive method
-result_naive <- naive_bn(data, distribution = "gaussian")
+result_naive <- naive_bn_structure_learning(data, distribution = "gaussian")
 
 # Branch and Bound
-result_bb <- branch_bound_bn(data, distribution = "multinomial")
+result_bb <-  branch_and_bound_bn(data, distribution = "multinomial")
 
 # Hill Climbing
-result_hc <- hill_climbing_bn(data, distribution = "gaussian")
+result_hc <- hill_climbing_bn(X_boston, distribution = "gaussian", max_iter = 100, verbose = FALSE)
 
 # Tabu Search
-result_tabu <- tabu_search_bn(data, distribution = "gaussian")
+result_tabu <- tabu_search_bn(X_boston, distribution = "gaussian", max_iter = 50, tabu_tenure = 10, verbose = FALSE)
 
 # Extract results
-adjacency_matrix <- result_hc$adjacency_matrix
-bic_score <- result_hc$bic_score
+adjacency_matrix <- result_bb$best_adj
+bic_score <- result_bb$best_score
 ```
 
 ## Output Format
